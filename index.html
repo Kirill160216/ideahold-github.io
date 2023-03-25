@@ -1,0 +1,62 @@
+import os
+import requests
+from telegram import Update, ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
+
+# Define your Telegram bot token here
+TELEGRAM_BOT_TOKEN = "6284586119:AAGXE9T9Z0GHxsg3o-Ozspw2wHXrgiVlSws"
+
+# Define the channel ID for the Telegram channel the user needs to subscribe to
+CHANNEL_ID = "@Digitalmarketingms"
+
+# Define a dictionary to store user subscription status
+user_subscription = {}
+
+# Define the start command handler to prompt the user to subscribe to the channel
+def start_handler(update: Update, context: CallbackContext) -> None:
+    # Get the user ID
+    user_id = update.effective_user.id
+
+    # Check if the user has already subscribed to the channel
+    if user_subscription.get(user_id):
+        # User has already subscribed to the channel, allow them to use the bot
+        update.message.reply_text("Вы уже подписались на наш канал. Теперь вы можете использовать бот.")
+    else:
+        # User has not yet subscribed to the channel, prompt them to do so
+        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Подписаться", url=f"https://t.me/{CHANNEL_ID}")]])
+        update.message.reply_text("Вы должны подписаться на наш канал, чтобы использовать бот.", reply_markup=keyboard)
+
+# Define the callback function to handle button presses from users
+def button_handler(update: Update, context: CallbackContext) -> None:
+    # Get the user ID and the ID of the button that was pressed
+    user_id = update.effective_user.id
+    button_id = update.callback_query.data
+
+    if button_id == "subscribe":
+        # User has clicked the "Подписаться" button, update the subscription status
+        user_subscription[user_id] = True
+
+        # Send a confirmation message to the user
+        update.callback_query.answer("Вы подписались на наш канал. Теперь вы можете использовать бот.")
+
+    elif button_id == "subscribed":
+        # User has clicked the "Подписался" button, allow them to use the bot
+        user_subscription[user_id] = True
+
+        # Send a confirmation message to the user
+        update.callback_query.answer("Спасибо, что подписались на наш канал. Теперь вы можете использовать бот.")
+    else:
+        # Unknown button ID, ignore it
+        pass
+
+# Define the callback function to handle messages from users
+def message_handler(update: Update, context: CallbackContext) -> None:
+    # Get the user ID
+    user_id = update.effective_user.id
+
+    # Check if the user has subscribed to the channel
+    if not user_subscription.get(user_id):
+        # User has not yet subscribed to the channel, prompt them to do so
+        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Подписаться", url=f"https://t.me/{CHANNEL_ID}")]])
+        update.message.reply_text("Вы должны подписаться на наш канал, чтобы использовать бот.", reply_markup=keyboard)
+        return
